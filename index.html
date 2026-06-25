@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glow — Request a Callback</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .cb-card {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.07);
+    }
+    .cb-header {
+      background: #12122a;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cb-logo { display: flex; align-items: center; gap: 10px; }
+    .cb-logo svg { width: 36px; height: 36px; flex-shrink: 0; }
+    .cb-logo-text { font-size: 22px; font-weight: 600; color: #ffffff; letter-spacing: -0.4px; }
+    .cb-header-sub { font-size: 11.5px; color: rgba(255,255,255,0.5); text-align: right; line-height: 1.5; }
+    .cb-body { padding: 24px; }
+    .cb-intro { font-size: 13px; color: #666; line-height: 1.65; margin-bottom: 22px; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .req { color: #F5A623; }
+    .field input, .field select, .field textarea {
+      width: 100%; font-size: 14px; font-family: inherit; color: #1a1a2e;
+      background: #f7f8fa; border: 1px solid #e2e4e8; border-radius: 8px;
+      padding: 9px 12px; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: #F5A623; box-shadow: 0 0 0 3px rgba(245,166,35,0.18); background: #fff;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: #bbb; }
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; cursor: pointer;
+    }
+    .field textarea { resize: vertical; min-height: 82px; line-height: 1.55; }
+    .field-hint { font-size: 11.5px; color: #aaa; margin-top: 5px; line-height: 1.45; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .cb-divider { border: none; border-top: 1px solid #f0f1f3; margin: 6px 0 18px; }
+    .cb-notice {
+      background: #fffbf0; border: 1px solid #fde8a0; border-radius: 8px;
+      padding: 10px 12px; margin-bottom: 18px; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .cb-notice i { color: #F5A623; font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+    .cb-notice p { font-size: 12px; color: #7a6520; line-height: 1.55; }
+    .field input.err, .field select.err, .field textarea.err {
+      border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.12);
+    }
+    .err-msg { font-size: 11.5px; color: #e74c3c; margin-top: 4px; display: none; }
+    .err-msg.show { display: block; }
+    .cb-btn {
+      width: 100%; padding: 11px 16px; background: #F5A623; border: none; border-radius: 8px;
+      color: #12122a; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .cb-btn:hover { background: #e09510; }
+    .cb-btn:active { transform: scale(0.985); }
+    .cb-btn:disabled { background: #f0d48a; cursor: not-allowed; transform: none; }
+    .cb-btn i { font-size: 16px; }
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(26,26,46,0.25);
+      border-top-color: #12122a; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .cb-success {
+      padding: 36px 24px 32px; text-align: center;
+      display: none; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .success-ring {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: #fff8ea; border: 2px solid #F5A623;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 4px;
+    }
+    .success-ring i { font-size: 26px; color: #F5A623; }
+    .success-title { font-size: 17px; font-weight: 600; color: #12122a; }
+    .success-body { font-size: 13px; color: #666; line-height: 1.65; max-width: 300px; }
+    .success-ref {
+      font-size: 11.5px; color: #aaa; background: #f7f8fa;
+      border: 1px solid #e2e4e8; border-radius: 6px; padding: 5px 14px;
+      margin-top: 4px; font-family: 'Courier New', monospace; letter-spacing: 0.5px;
+    }
+    .success-lead-id {
+      font-size: 11.5px; color: #2e7d52; background: #f0faf5;
+      border: 1px solid #b2e0c8; border-radius: 6px; padding: 5px 14px;
+      font-family: 'Courier New', monospace; letter-spacing: 0.3px;
+    }
+    .success-new {
+      margin-top: 10px; background: none; border: 1px solid #e2e4e8;
+      border-radius: 8px; padding: 8px 22px; font-size: 13px; color: #666;
+      cursor: pointer; font-family: inherit; transition: background 0.12s;
+    }
+    .success-new:hover { background: #f7f8fa; }
+    .cb-error-msg {
+      background: #fff5f5; border: 1px solid #fcc; border-radius: 8px;
+      padding: 10px 12px; margin-top: 12px; font-size: 13px; color: #c0392b;
+      display: none; line-height: 1.5;
+    }
+    .cb-error-msg.show { display: block; }
+    .debug-panel {
+      margin-top: 16px; background: #f7f8fa; border: 1px solid #e2e4e8;
+      border-radius: 8px; padding: 14px 16px; font-size: 11px; color: #555; display: none;
+    }
+    .debug-panel.show { display: block; }
+    .debug-panel h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; margin-bottom: 8px; }
+    .debug-panel pre { white-space: pre-wrap; word-break: break-all; line-height: 1.55; max-height: 260px; overflow-y: auto; }
+    .debug-toggle {
+      font-size: 11px; color: #bbb; background: none; border: none;
+      cursor: pointer; display: block; margin: 10px auto 0; font-family: inherit;
+    }
+    .debug-toggle:hover { color: #888; }
+    .cb-card-footer {
+      padding: 12px 24px; background: #f7f8fa; border-top: 1px solid #f0f1f3;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cb-card-footer p { font-size: 11px; color: #bbb; }
+    .cb-card-footer a { font-size: 11px; color: #bbb; text-decoration: none; }
+    .cb-card-footer a:hover { color: #888; }
+    @media (max-width: 480px) {
+      body { padding: 1rem 0.75rem; align-items: flex-start; }
+      .cb-card { border-radius: 10px; }
+      .field-row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <div class="cb-card" role="main">
+
+    <div class="cb-header">
+      <div class="cb-logo">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <polygon points="18,3 34,21 2,21" fill="#F5A623"/>
+          <rect x="9" y="21" width="18" height="9" rx="1" fill="white" opacity="0.9"/>
+        </svg>
+        <span class="cb-logo-text">Glow</span>
+      </div>
+      <p class="cb-header-sub">Request a callback<br>from our team</p>
+    </div>
+
+    <!-- Form -->
+    <div class="cb-body" id="formSection">
+      <p class="cb-intro">Complete the form and a Glow specialist will call you as soon as possible.</p>
+
+      <div class="field">
+        <label for="f-name">Full name <span class="req">*</span></label>
+        <input type="text" id="f-name" placeholder="e.g. Sarah Johnson" autocomplete="name" />
+        <p class="err-msg" id="err-name">Please enter your full name.</p>
+      </div>
+
+      <div class="field">
+        <label for="f-phone">Phone number <span class="req">*</span></label>
+        <input type="tel" id="f-phone" placeholder="e.g. 07700 900123" autocomplete="tel" />
+        <p class="field-hint">The number we'll call you back on.</p>
+        <p class="err-msg" id="err-phone">Please enter a valid phone number.</p>
+      </div>
+
+      <div class="field">
+        <label for="f-loan">Loan ID <span class="req">*</span></label>
+        <input type="text" id="f-loan" placeholder="e.g. EEF-2024-00123" autocomplete="off" />
+        <p class="field-hint">Found on your welcome letter or monthly statement.</p>
+        <p class="err-msg" id="err-loan">Please enter your Loan ID.</p>
+      </div>
+
+      <div class="field">
+        <label for="f-querytype">Nature of query <span class="req">*</span></label>
+        <select id="f-querytype">
+          <option value="" disabled selected>Select a topic&hellip;</option>
+          <option value="Payment query">Payment query</option>
+          <option value="Direct debit change">Direct debit change</option>
+          <option value="Settlement figure">Settlement figure</option>
+          <option value="Arrears / financial difficulty">Arrears / financial difficulty</option>
+          <option value="Balloon / flex payment">Balloon / flex payment</option>
+          <option value="Trade-in or upgrade">Trade-in or upgrade</option>
+          <option value="General account query">General account query</option>
+          <option value="Other">Other</option>
+        </select>
+        <p class="err-msg" id="err-querytype">Please select a query topic.</p>
+      </div>
+
+      <div class="field">
+        <label for="f-detail">Additional details</label>
+        <textarea id="f-detail" placeholder="Briefly describe your query (optional)&hellip;"></textarea>
+      </div>
+
+      <hr class="cb-divider" />
+
+      <div class="field-row">
+        <div class="field">
+          <label for="f-date">Preferred date</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="field">
+          <label for="f-time">Preferred time</label>
+          <input type="time" id="f-time" min="08:00" max="19:00" />
+        </div>
+      </div>
+
+      <div class="cb-notice">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        <p>Your preferred time is a guide only — we'll call you at the earliest opportunity <strong>after</strong> the time you select. Leave blank if you have no preference.</p>
+      </div>
+
+      <button class="cb-btn" id="submitBtn" onclick="submitForm()">
+        <div class="spinner" id="spinner"></div>
+        <i class="ti ti-phone-outgoing" id="btnIcon" aria-hidden="true"></i>
+        <span id="btnLabel">Request callback</span>
+      </button>
+
+      <div class="cb-error-msg" id="apiError"></div>
+
+      <button class="debug-toggle" onclick="toggleDebug()" id="debugToggle">Show debug info</button>
+      <div class="debug-panel" id="debugPanel">
+        <h4>ipSCAPE API — last request &amp; response</h4>
+        <pre id="debugContent">No request sent yet.</pre>
+      </div>
+    </div>
+
+    <!-- Success screen -->
+    <div class="cb-success" id="successSection" aria-live="polite">
+      <div class="success-ring"><i class="ti ti-check" aria-hidden="true"></i></div>
+      <p class="success-title">Callback requested</p>
+      <p class="success-body" id="successMsg">Your request has been passed to our contact centre.</p>
+      <p class="success-ref" id="successRef"></p>
+      <p class="success-lead-id" id="successLeadId"></p>
+      <button class="success-new" onclick="resetForm()">Submit another request</button>
+    </div>
+
+    <div class="cb-card-footer">
+      <p>Glow Financial Services Ltd</p>
+      <a href="https://www.glowfinancial.co.uk/privacy" target="_blank" rel="noopener">Privacy policy</a>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── ipSCAPE configuration ────────────────────────────────────
+var IPSCAPE = {
+  domain:     'glowus.ipscapecc.com',
+  authB64:    'RG9tX0FkbWluX1VTOkdsb3cxMjMh',
+  listId:     12,
+  campaignId: 1,
+  leadType:   'Call back - Queue',
+  timezone:   'Europe/London'
+};
+// ─────────────────────────────────────────────────────────────
+
+document.getElementById('f-date').setAttribute('min', new Date().toISOString().split('T')[0]);
+
+function normalisePhone(raw) {
+  var s = raw.replace(/[\s\-\(\)]/g, '');
+  if (/^07\d{9}$/.test(s))  return '+44' + s.slice(1);
+  if (/^447\d{9}$/.test(s)) return '+' + s;
+  return s;
+}
+
+function buildTimestamp(dateVal, timeVal) {
+  var now  = new Date();
+  var pad  = function(n){ return String(n).padStart(2,'0'); };
+  var yyyy = dateVal ? dateVal.split('-')[0] : now.getFullYear();
+  var mm   = dateVal ? dateVal.split('-')[1] : pad(now.getMonth()+1);
+  var dd   = dateVal ? dateVal.split('-')[2] : pad(now.getDate());
+  var hh   = timeVal ? timeVal.split(':')[0] : pad(now.getHours());
+  var min  = timeVal ? timeVal.split(':')[1] : pad(now.getMinutes());
+  return yyyy + '-' + mm + '-' + dd + ' ' + hh + ':' + min + ':00';
+}
+
+function validate() {
+  var ok = true;
+  var checks = [
+    { id: 'f-name',      err: 'err-name',      test: function(v){ return v.trim().length > 1; },                        msg: 'Please enter your full name.' },
+    { id: 'f-phone',     err: 'err-phone',      test: function(v){ return v.replace(/[\s\-\(\)]/g,'').length >= 7; },   msg: 'Please enter a valid phone number.' },
+    { id: 'f-loan',      err: 'err-loan',       test: function(v){ return v.trim().length > 0; },                       msg: 'Please enter your Loan ID.' },
+    { id: 'f-querytype', err: 'err-querytype',  test: function(v){ return v !== ''; },                                  msg: 'Please select a query topic.' }
+  ];
+  checks.forEach(function(c) {
+    var el = document.getElementById(c.id);
+    var er = document.getElementById(c.err);
+    if (!c.test(el.value)) {
+      el.classList.add('err'); er.textContent = c.msg; er.classList.add('show'); ok = false;
+    } else {
+      el.classList.remove('err'); er.classList.remove('show');
+    }
+  });
+  return ok;
+}
+
+function setLoading(on) {
+  document.getElementById('submitBtn').disabled             = on;
+  document.getElementById('spinner').style.display          = on ? 'block' : 'none';
+  document.getElementById('btnIcon').style.display          = on ? 'none'  : 'inline';
+  document.getElementById('btnLabel').textContent           = on ? 'Sending\u2026' : 'Request callback';
+}
+
+function writeDebug(endpoint, bodyStr, status, rawResponse) {
+  var decoded = '';
+  try { decoded = decodeURIComponent(bodyStr.replace(/\+/g,' ')); } catch(e) { decoded = bodyStr; }
+  document.getElementById('debugContent').textContent =
+    'ENDPOINT:\n' + endpoint +
+    '\n\nPARAMETERS (decoded):\n' + decoded.split('&').join('\n') +
+    '\n\nHTTP STATUS: ' + status +
+    '\n\nRESPONSE:\n' + rawResponse;
+}
+
+function toggleDebug() {
+  var panel = document.getElementById('debugPanel');
+  var btn   = document.getElementById('debugToggle');
+  btn.textContent = panel.classList.toggle('show') ? 'Hide debug info' : 'Show debug info';
+}
+
+function showSuccess(ref, leadId, dateVal, timeVal) {
+  var msg = 'Your request has been passed to our contact centre and an agent will call you shortly.';
+  if (dateVal || timeVal) {
+    var parts = [];
+    if (dateVal) {
+      var d = new Date(dateVal + 'T00:00:00');
+      parts.push(d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }));
+    }
+    if (timeVal) parts.push('after ' + timeVal);
+    msg = 'We will call you at the earliest opportunity ' + parts.join(', ') + '.';
+  }
+  document.getElementById('successMsg').textContent    = msg;
+  document.getElementById('successRef').textContent    = 'Ref: ' + ref;
+  document.getElementById('successLeadId').textContent = leadId ? 'ipSCAPE lead ID: ' + leadId : '';
+  document.getElementById('formSection').style.display   = 'none';
+  document.getElementById('successSection').style.display = 'flex';
+}
+
+function showApiError(msg) {
+  var el = document.getElementById('apiError');
+  el.textContent = msg; el.classList.add('show');
+}
+function clearApiError() {
+  var el = document.getElementById('apiError');
+  el.classList.remove('show'); el.textContent = '';
+}
+
+async function submitForm() {
+  if (!validate()) return;
+  clearApiError();
+  setLoading(true);
+
+  var name      = document.getElementById('f-name').value.trim();
+  var phone     = normalisePhone(document.getElementById('f-phone').value);
+  var loanId    = document.getElementById('f-loan').value.trim();
+  var queryType = document.getElementById('f-querytype').value;
+  var detail    = document.getElementById('f-detail').value.trim();
+  var dateVal   = document.getElementById('f-date').value;
+  var timeVal   = document.getElementById('f-time').value;
+  var ref       = 'CB-' + Date.now().toString(36).toUpperCase().slice(-8);
+  var timestamp = buildTimestamp(dateVal, timeVal);
+
+  var leadData = JSON.stringify({
+    CustomerName: name,
+    LoanID:       loanId,
+    QueryType:    queryType,
+    Query:        detail || queryType
+  });
+
+  var params = new URLSearchParams();
+  params.append('allowInvalidPhone',     '1');
+  params.append('campaignId',            String(IPSCAPE.campaignId));
+  params.append('listId',                String(IPSCAPE.listId));
+  params.append('leadType',              IPSCAPE.leadType);
+  params.append('phone1',               phone);
+  params.append('earliestCallTimestamp', timestamp);
+  params.append('leadData',             leadData);
+  params.append('timezone',             IPSCAPE.timezone);
+
+  var endpoint = 'https://' + IPSCAPE.domain + '/api/latest/lead/createlead';
+  var bodyStr  = params.toString();
+
+  try {
+    var response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + IPSCAPE.authB64,
+        'X-Ipscape-org': IPSCAPE.domain
+      },
+      body: bodyStr
+    });
+
+    var rawText = await response.text();
+    writeDebug(endpoint, bodyStr, response.status, rawText);
+
+    var data = null;
+    try { data = JSON.parse(rawText); } catch(e) {}
+
+    if (response.ok && data && data.resultCode === 'success') {
+      var leadId = (data.result && data.result.leadId) ? data.result.leadId : null;
+      showSuccess(ref, leadId, dateVal, timeVal);
+    } else {
+      setLoading(false);
+      showApiError('ipSCAPE returned an error (HTTP ' + response.status + '). Check the debug panel below for details.');
+      document.getElementById('debugPanel').classList.add('show');
+      document.getElementById('debugToggle').textContent = 'Hide debug info';
+    }
+
+  } catch(err) {
+    setLoading(false);
+    writeDebug(endpoint, bodyStr, 'NETWORK ERROR', err.message);
+    showApiError(
+      'Could not reach ipSCAPE (' + err.message + '). ' +
+      'If testing locally, open this file via a web server (not file://) to avoid CORS restrictions.'
+    );
+    document.getElementById('debugPanel').classList.add('show');
+    document.getElementById('debugToggle').textContent = 'Hide debug info';
+  }
+}
+
+function resetForm() {
+  ['f-name','f-phone','f-loan','f-detail','f-date','f-time'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-querytype').value = '';
+  ['f-name','f-phone','f-loan','f-querytype'].forEach(function(id){
+    document.getElementById(id).classList.remove('err');
+  });
+  ['err-name','err-phone','err-loan','err-querytype'].forEach(function(id){
+    document.getElementById(id).classList.remove('show');
+  });
+  clearApiError();
+  document.getElementById('formSection').style.display    = 'block';
+  document.getElementById('successSection').style.display = 'none';
+}
+
+['f-name','f-phone','f-loan','f-querytype'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() {
+    this.classList.remove('err');
+    var suffix = id.replace('f-','');
+    var errEl = document.getElementById('err-' + suffix);
+    if (errEl) errEl.classList.remove('show');
+  });
+});
+</script>
+
+</body>
+</html>
