@@ -261,6 +261,8 @@
 <script>
 // ── ipSCAPE configuration ────────────────────────────────────
 var IPSCAPE = {
+  // Paste your Cloudflare Worker URL here after deploying
+  proxyUrl: 'https://glow-callback.dom-ba9.workers.dev',
   domain:     'glowus.ipscapecc.com',
   authB64:    'RG9tX0FkbWluX1VTOkdsb3cxMjMh',
   listId:     12,
@@ -382,27 +384,21 @@ async function submitForm() {
     Query:        detail || queryType
   });
 
-  var params = new URLSearchParams();
-  params.append('allowInvalidPhone',     '1');
-  params.append('campaignId',            String(IPSCAPE.campaignId));
-  params.append('listId',                String(IPSCAPE.listId));
-  params.append('leadType',              IPSCAPE.leadType);
-  params.append('phone1',               phone);
-  params.append('earliestCallTimestamp', timestamp);
-  params.append('leadData',             leadData);
-  params.append('timezone',             IPSCAPE.timezone);
-
-  var endpoint = 'https://' + IPSCAPE.domain + '/api/latest/lead/createlead';
-  var bodyStr  = params.toString();
+  // Send as JSON to the Cloudflare proxy — it handles auth + form-encoding to ipSCAPE
+  var endpoint = IPSCAPE.proxyUrl;
+  var bodyStr  = JSON.stringify({
+    name:      name,
+    phone:     phone,
+    loanId:    loanId,
+    queryType: queryType,
+    query:     detail || queryType,
+    timestamp: timestamp
+  });
 
   try {
     var response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + IPSCAPE.authB64,
-        'X-Ipscape-org': IPSCAPE.domain
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: bodyStr
     });
 
