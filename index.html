@@ -139,16 +139,6 @@
     .cb-card-footer p { font-size: 11px; color: #bbb; }
     .cb-card-footer a { font-size: 11px; color: #bbb; text-decoration: none; }
     .cb-card-footer a:hover { color: #888; }
-    .time-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .time-opt {
-      padding: 10px 12px; background: #f7f8fa; border: 1px solid #e2e4e8;
-      border-radius: 8px; font-size: 13px; font-family: inherit; color: #555;
-      cursor: pointer; display: flex; align-items: center; gap: 7px;
-      transition: all 0.15s; font-weight: 500;
-    }
-    .time-opt i { font-size: 15px; }
-    .time-opt:hover { border-color: #F5A623; color: #1a1a2e; background: #fffbf0; }
-    .time-opt.active { background: #fff8ea; border-color: #F5A623; color: #1a1a2e; border-width: 1.5px; }
     @media (max-width: 480px) {
       body { padding: 1rem 0.75rem; align-items: flex-start; }
       .cb-card { border-radius: 10px; }
@@ -217,38 +207,7 @@
         <textarea id="f-detail" placeholder="Briefly describe your query (optional)&hellip;"></textarea>
       </div>
 
-      <hr class="cb-divider" />
 
-      <div class="field">
-        <label>When would you like us to call?</label>
-        <div class="time-options">
-          <button type="button" class="time-opt active" id="btn-asap" onclick="selectTimeOpt('asap')">
-            <i class="ti ti-bolt" aria-hidden="true"></i>
-            As soon as possible
-          </button>
-          <button type="button" class="time-opt" id="btn-schedule" onclick="selectTimeOpt('schedule')">
-            <i class="ti ti-calendar-time" aria-hidden="true"></i>
-            Choose a time
-          </button>
-        </div>
-      </div>
-
-      <div id="schedule-fields" style="display:none;">
-        <div class="field-row">
-          <div class="field">
-            <label for="f-date">Preferred date</label>
-            <input type="date" id="f-date" />
-          </div>
-          <div class="field">
-            <label for="f-time">Preferred time</label>
-            <input type="time" id="f-time" min="08:00" max="19:00" />
-          </div>
-        </div>
-        <div class="cb-notice">
-          <i class="ti ti-info-circle" aria-hidden="true"></i>
-          <p>We'll call you at the earliest opportunity <strong>after</strong> the time you select.</p>
-        </div>
-      </div>
 
       <button class="cb-btn" id="submitBtn" onclick="submitForm()">
         <div class="spinner" id="spinner"></div>
@@ -297,7 +256,7 @@ var IPSCAPE = {
 };
 // ─────────────────────────────────────────────────────────────
 
-document.getElementById('f-date').setAttribute('min', new Date().toISOString().split('T')[0]);
+
 
 function normalisePhone(raw) {
   var s = raw.replace(/[\s\-\(\)]/g, '');
@@ -306,41 +265,7 @@ function normalisePhone(raw) {
   return s;
 }
 
-function buildTimestamp(dateVal, timeVal, asap) {
-  var pad = function(n){ return String(n).padStart(2,'0'); };
-  if (asap) {
-    // Get current time in America/New_York reliably using Intl.DateTimeFormat
-    var now = new Date(Date.now() + 5*60*1000); // 5 min buffer
-    var parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    }).formatToParts(now);
-    var p = {};
-    parts.forEach(function(x){ p[x.type] = x.value; });
-    // hour12:false gives 24 in some browsers instead of 00 — normalise
-    var hh = p.hour === '24' ? '00' : p.hour;
-    return p.year + '-' + p.month + '-' + p.day + ' ' + hh + ':' + p.minute + ':00';
-  }
-  // User selected a specific date/time — sent as NY local time directly
-  var yyyy = dateVal ? dateVal.split('-')[0] : new Date().getFullYear();
-  var mm   = dateVal ? dateVal.split('-')[1] : pad(new Date().getMonth()+1);
-  var dd   = dateVal ? dateVal.split('-')[2] : pad(new Date().getDate());
-  var hh   = timeVal ? timeVal.split(':')[0] : '09';
-  var min  = timeVal ? timeVal.split(':')[1] : '00';
-  return yyyy + '-' + mm + '-' + dd + ' ' + hh + ':' + min + ':00';
-}
 
-function selectTimeOpt(opt) {
-  var asap = opt === 'asap';
-  document.getElementById('btn-asap').classList.toggle('active', asap);
-  document.getElementById('btn-schedule').classList.toggle('active', !asap);
-  document.getElementById('schedule-fields').style.display = asap ? 'none' : 'block';
-  if (asap) {
-    document.getElementById('f-date').value = '';
-    document.getElementById('f-time').value = '';
-  }
-}
 
 function validate() {
   var ok = true;
@@ -385,17 +310,8 @@ function toggleDebug() {
   btn.textContent = panel.classList.toggle('show') ? 'Hide debug info' : 'Show debug info';
 }
 
-function showSuccess(ref, leadId, dateVal, timeVal) {
-  var msg = 'Your request has been passed to our contact centre and an agent will call you shortly.';
-  if (dateVal || timeVal) {
-    var parts = [];
-    if (dateVal) {
-      var d = new Date(dateVal + 'T00:00:00');
-      parts.push(d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }));
-    }
-    if (timeVal) parts.push('after ' + timeVal);
-    msg = 'We will call you at the earliest opportunity ' + parts.join(', ') + '.';
-  }
+function showSuccess(ref, leadId) {
+  var msg = 'Your request has been received and an agent will call you back as soon as possible.';
   document.getElementById('successMsg').textContent    = msg;
   document.getElementById('successRef').textContent    = 'Ref: ' + ref;
   document.getElementById('successLeadId').textContent = leadId ? 'ipSCAPE lead ID: ' + leadId : '';
@@ -422,11 +338,7 @@ async function submitForm() {
   var loanId    = document.getElementById('f-loan').value.trim();
   var queryType = document.getElementById('f-querytype').value;
   var detail    = document.getElementById('f-detail').value.trim();
-  var dateVal   = document.getElementById('f-date').value;
-  var timeVal   = document.getElementById('f-time').value;
-  var ref       = 'CB-' + Date.now().toString(36).toUpperCase().slice(-8);
-  var isAsap = document.getElementById('btn-asap').classList.contains('active');
-  var timestamp = buildTimestamp(dateVal, timeVal, isAsap);
+  var ref = 'CB-' + Date.now().toString(36).toUpperCase().slice(-8);
 
   var leadData = JSON.stringify({
     CustomerName: name,
@@ -442,8 +354,7 @@ async function submitForm() {
     phone:     phone,
     loanId:    loanId,
     queryType: queryType,
-    query:     detail || queryType,
-    timestamp: timestamp
+    query:     detail || queryType
   });
 
   try {
@@ -461,7 +372,7 @@ async function submitForm() {
 
     if (response.ok && data && data.resultCode === 'success') {
       var leadId = (data.result && data.result.leadId) ? data.result.leadId : null;
-      showSuccess(ref, leadId, dateVal, timeVal);
+      showSuccess(ref, leadId);
     } else {
       setLoading(false);
       showApiError('ipSCAPE returned an error (HTTP ' + response.status + '). Check the debug panel below for details.');
@@ -482,7 +393,7 @@ async function submitForm() {
 }
 
 function resetForm() {
-  ['f-name','f-phone','f-loan','f-detail','f-date','f-time'].forEach(function(id){
+  ['f-name','f-phone','f-loan','f-detail'].forEach(function(id){
     document.getElementById(id).value = '';
   });
   document.getElementById('f-querytype').value = '';
