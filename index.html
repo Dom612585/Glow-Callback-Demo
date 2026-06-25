@@ -200,14 +200,14 @@
         <label for="f-querytype">Nature of query <span class="req">*</span></label>
         <select id="f-querytype">
           <option value="" disabled selected>Select a topic&hellip;</option>
-          <option value="Payment query">Payment query</option>
-          <option value="Direct debit change">Direct debit change</option>
-          <option value="Settlement figure">Settlement figure</option>
-          <option value="Arrears / financial difficulty">Arrears / financial difficulty</option>
-          <option value="Balloon / flex payment">Balloon / flex payment</option>
-          <option value="Trade-in or upgrade">Trade-in or upgrade</option>
-          <option value="General account query">General account query</option>
-          <option value="Other">Other</option>
+          <option value="Change payment date">Change payment date</option>
+          <option value="Change payment details">Change payment details</option>
+          <option value="Change personal details">Change personal details</option>
+          <option value="Application query">Application query</option>
+          <option value="Loan query">Loan query</option>
+          <option value="Financial difficulties">Financial difficulties</option>
+          <option value="General query">General query</option>
+          <option value="Complaint">Complaint</option>
         </select>
         <p class="err-msg" id="err-querytype">Please select a query topic.</p>
       </div>
@@ -309,12 +309,20 @@ function normalisePhone(raw) {
 function buildTimestamp(dateVal, timeVal, asap) {
   var pad = function(n){ return String(n).padStart(2,'0'); };
   if (asap) {
-    // Generate timestamp in America/New_York with 3-min buffer
-    var nyStr = new Date(Date.now() + 3*60*1000).toLocaleString('en-US', {timeZone: 'America/New_York'});
-    var ny = new Date(nyStr);
-    return ny.getFullYear() + '-' + pad(ny.getMonth()+1) + '-' + pad(ny.getDate()) + ' ' + pad(ny.getHours()) + ':' + pad(ny.getMinutes()) + ':00';
+    // Get current time in America/New_York reliably using Intl.DateTimeFormat
+    var now = new Date(Date.now() + 5*60*1000); // 5 min buffer
+    var parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(now);
+    var p = {};
+    parts.forEach(function(x){ p[x.type] = x.value; });
+    // hour12:false gives 24 in some browsers instead of 00 — normalise
+    var hh = p.hour === '24' ? '00' : p.hour;
+    return p.year + '-' + p.month + '-' + p.day + ' ' + hh + ':' + p.minute + ':00';
   }
-  // User selected a specific date/time — treat as NY local time directly
+  // User selected a specific date/time — sent as NY local time directly
   var yyyy = dateVal ? dateVal.split('-')[0] : new Date().getFullYear();
   var mm   = dateVal ? dateVal.split('-')[1] : pad(new Date().getMonth()+1);
   var dd   = dateVal ? dateVal.split('-')[2] : pad(new Date().getDate());
